@@ -9,4 +9,14 @@ __pycache__/
 *.sqlite3
 *.log
 .env.local
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.DS_Store
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
 
