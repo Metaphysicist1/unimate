@@ -1,0 +1,46 @@
+.
+├── app
+│   ├── api
+│   │   ├── debug-supabase
+│   │   │   └── route.ts
+│   │   └── results
+│   │       └── [id]
+│   │           └── route.ts
+│   ├── check
+│   │   ├── [id]
+│   │   │   └── page.tsx
+│   │   └── page.tsx
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── results
+│       └── [id]
+│           └── page.tsx
+├── a.txt
+├── components
+│   ├── Footer.tsx
+│   ├── issue-card.tsx
+│   ├── Navbar.tsx
+│   ├── risk-badge.tsx
+│   ├── ui
+│   │   ├── badge.tsx
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   └── progress.tsx
+│   └── upload-zone.tsx
+├── components.json
+├── lib
+│   ├── api.ts
+│   ├── supabase
+│   │   ├── client.ts
+│   │   └── server.ts
+│   └── utils.ts
+├── next.config.js
+├── next-env.d.ts
+├── package.json
+├── package-lock.json
+├── postcss.config.js
+├── tailwind.config.ts
+└── tsconfig.json
+
+13 directories, 30 files

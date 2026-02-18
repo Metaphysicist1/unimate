@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///home/metaphysicist/Coding/2026/uni-assist-checker/frontend/app/check/page.tsx"],"sourcesContent":["export default function CheckPage() {\n  return (\n    <div className=\"min-h-screen flex items-center justify-center bg-gray-50\">\n      <div className=\"text-center\">\n        <h1 className=\"text-3xl font-bold mb-6\">Upload Documents to Check</h1>\n        {/* Your upload form, file input, submit button, etc. */}\n        <p>Submit your application docs here...</p>\n      </div>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;kBACb,cAAA,8OAAC;YAAI,WAAU;;8BACb,8OAAC;oBAAG,WAAU;8BAA0B;;;;;;8BAExC,8OAAC;8BAAE;;;;;;;;;;;;;;;;;AAIX"}}]
+}
