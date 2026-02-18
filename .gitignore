@@ -9,7 +9,7 @@ __pycache__/
 *.sqlite3
 *.log
 .env.local
-.next/
+.next
 dist/
 build/
 coverage/
@@ -19,4 +19,4 @@ coverage/
 .vscode/
 *.sublime-project
 *.sublime-workspace
-
+.next/
