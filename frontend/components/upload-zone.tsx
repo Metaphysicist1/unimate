@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 
 interface UploadZoneProps {
   label: string;
@@ -8,6 +8,8 @@ interface UploadZoneProps {
 }
 
 export function UploadZone({ label, onFileSelect }: UploadZoneProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -25,10 +27,15 @@ export function UploadZone({ label, onFileSelect }: UploadZoneProps) {
     [onFileSelect],
   );
 
+  const handleClick = useCallback(() => {
+    inputRef.current?.click();
+  }, []);
+
   return (
     <div
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
+      onClick={handleClick}
       className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-500 transition"
     >
       <p className="font-medium">{label}</p>
@@ -36,6 +43,7 @@ export function UploadZone({ label, onFileSelect }: UploadZoneProps) {
         Drag & drop or click to select
       </p>
       <input
+        ref={inputRef}
         type="file"
         onChange={handleChange}
         className="hidden"

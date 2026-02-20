@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 import json
 from app.services.gemini import gemini
+from app.services.pdf_extractor import pdf_extractor
 from app.services.pdf_processor import pdf_processor
 from app.services.database import db
 from app.models.schemas import AnalysisResult
@@ -56,9 +57,10 @@ async def analyze_application(
         # Extract text using Gemini (better OCR than PyPDF2)
         print(f"Extracting text for application {app_id}...")
         
-        transcript_text = await gemini.extract_text_from_pdf(transcript_bytes)
-        degree_text = await gemini.extract_text_from_pdf(degree_bytes)
-        language_text = await gemini.extract_text_from_pdf(language_bytes)
+        # Use local PDF extraction (pdfplumber) instead of Gemini API
+        transcript_text = pdf_extractor.extract_text_from_pdf(transcript_bytes)
+        degree_text = pdf_extractor.extract_text_from_pdf(degree_bytes)
+        language_text = pdf_extractor.extract_text_from_pdf(language_bytes)
         
         print(f"Text extracted. Analyzing with Gemini...")
         
