@@ -44,98 +44,98 @@ class GeminiService:
         """Analyze documents with Gemini"""
         
         prompt = f"""
-You are an expert uni-assist application auditor for German universities.
+            You are an expert uni-assist application auditor for German universities.
 
-Analyze these student documents for common rejection risks:
+            Analyze these student documents for common rejection risks:
 
-STUDENT INFO:
-- Country: {country}
-- Target Universities: {', '.join(universities)}
-- Program: Computer Science / Informatik
+            STUDENT INFO:
+            - Country: {country}
+            - Target Universities: {', '.join(universities)}
+            - Program: Computer Science / Informatik
 
-DOCUMENTS:
+            DOCUMENTS:
 
-TRANSCRIPT:
-{transcript_text[:4000]}
+            TRANSCRIPT:
+            {transcript_text[:4000]}
 
-DEGREE CERTIFICATE:
-{degree_text[:2000]}
+            DEGREE CERTIFICATE:
+            {degree_text[:2000]}
 
-LANGUAGE CERTIFICATE:
-{language_text[:2000]}
+            LANGUAGE CERTIFICATE:
+            {language_text[:2000]}
 
-ANALYSIS CHECKLIST:
+            ANALYSIS CHECKLIST:
 
-TRANSCRIPT ISSUES:
-1. Is text clearly readable or appears to be scanned image?
-2. Shows semester-by-semester breakdown (not just cumulative GPA)?
-3. Has "contact hours" or "semester hours" column?
-4. Includes grade scale explanation (e.g., "4.0 scale")?
-5. Course names are specific (not just codes like "CS 101")?
+            TRANSCRIPT ISSUES:
+            1. Is text clearly readable or appears to be scanned image?
+            2. Shows semester-by-semester breakdown (not just cumulative GPA)?
+            3. Has "contact hours" or "semester hours" column?
+            4. Includes grade scale explanation (e.g., "4.0 scale")?
+            5. Course names are specific (not just codes like "CS 101")?
 
-DEGREE CERTIFICATE ISSUES:
-1. Mentions apostille or notarization?
-2. Explicitly states "Bachelor of Science in Computer Science"?
-3. Is in English or German?
-4. Graduation date is consistent?
+            DEGREE CERTIFICATE ISSUES:
+            1. Mentions apostille or notarization?
+            2. Explicitly states "Bachelor of Science in Computer Science"?
+            3. Is in English or German?
+            4. Graduation date is consistent?
 
-LANGUAGE CERTIFICATE ISSUES:
-1. Test type identifiable (TestDaF, DSH, Goethe, telc)?
-2. Level is B2 or higher (not B1, A2, A1)?
-3. Shows clear "PASSED" statement?
-4. Certificate less than 2 years old?
+            LANGUAGE CERTIFICATE ISSUES:
+            1. Test type identifiable (TestDaF, DSH, Goethe, telc)?
+            2. Level is B2 or higher (not B1, A2, A1)?
+            3. Shows clear "PASSED" statement?
+            4. Certificate less than 2 years old?
 
-COUNTRY-SPECIFIC ({country}):
-- Common document issues for students from {country}
-- Apostille requirements
-- Typical transcript format problems
+            COUNTRY-SPECIFIC ({country}):
+            - Common document issues for students from {country}
+            - Apostille requirements
+            - Typical transcript format problems
 
-UNIVERSITY-SPECIFIC:
-- TU Munich: VPD required, separate math courses listing
-- RWTH Aachen: Strict ECTS conversion
-- LMU Munich: Vorprüfungsdokumentation for some countries
-- FU Berlin: More flexible requirements
+            UNIVERSITY-SPECIFIC:
+            - TU Munich: VPD required, separate math courses listing
+            - RWTH Aachen: Strict ECTS conversion
+            - LMU Munich: Vorprüfungsdokumentation for some countries
+            - FU Berlin: More flexible requirements
 
-Return ONLY valid JSON (no markdown, no extra text):
+            Return ONLY valid JSON (no markdown, no extra text):
 
-{{
-  "overall_risk": "LOW" | "MEDIUM" | "HIGH",
-  "rejection_probability": 0-100,
-  "issues_found": [
-    {{
-      "severity": "CRITICAL" | "WARNING" | "INFO",
-      "category": "Transcript" | "Degree Certificate" | "Language Certificate" | "Country-Specific" | "University-Specific",
-      "title": "Brief issue title",
-      "description": "One sentence explanation",
-      "how_to_fix": "Detailed 2-3 sentence step-by-step fix",
-      "estimated_cost": "€X or Free",
-      "estimated_time": "X days",
-      "common_percentage": 0-100,
-      "example": {{
-        "student_country": "Country name",
-        "target_uni": "University name",
-        "what_they_did": "How they fixed it",
-        "outcome": "accepted"
-      }}
-    }}
-  ],
-  "what_looks_good": [
-    "Positive finding 1",
-    "Positive finding 2",
-    "Positive finding 3"
-  ],
-  "action_plan": {{
-    "must_fix": ["Critical item 1", "Critical item 2"],
-    "recommended": ["Optional item 1", "Optional item 2"]
-  }}
-}}
+            {{
+            "overall_risk": "LOW" | "MEDIUM" | "HIGH",
+            "rejection_probability": 0-100,
+            "issues_found": [
+                {{
+                "severity": "CRITICAL" | "WARNING" | "INFO",
+                "category": "Transcript" | "Degree Certificate" | "Language Certificate" | "Country-Specific" | "University-Specific",
+                "title": "Brief issue title",
+                "description": "One sentence explanation",
+                "how_to_fix": "Detailed 2-3 sentence step-by-step fix",
+                "estimated_cost": "€X or Free",
+                "estimated_time": "X days",
+                "common_percentage": 0-100,
+                "example": {{
+                    "student_country": "Country name",
+                    "target_uni": "University name",
+                    "what_they_did": "How they fixed it",
+                    "outcome": "accepted"
+                }}
+                }}
+            ],
+            "what_looks_good": [
+                "Positive finding 1",
+                "Positive finding 2",
+                "Positive finding 3"
+            ],
+            "action_plan": {{
+                "must_fix": ["Critical item 1", "Critical item 2"],
+                "recommended": ["Optional item 1", "Optional item 2"]
+            }}
+            }}
 
-IMPORTANT:
-- Find AT LEAST 3-4 issues (no document is perfect)
-- Be specific and actionable
-- Include real examples for each issue
-- Return ONLY the JSON object, nothing else
-"""
+            IMPORTANT:
+            - Find AT LEAST 3-4 issues (no document is perfect)
+            - Be specific and actionable
+            - Include real examples for each issue
+            - Return ONLY the JSON object, nothing else
+            """
         
         try:
             response = model.generate_content(prompt)

@@ -1,5 +1,3 @@
-# unimate
-
 # UniMate 🎓
 
 ### _Your AI-Powered Companion for German University Admissions_
