@@ -86,7 +86,6 @@ export function Chat({
         });
         if (data.what_looks_good && data.what_looks_good.length > 0) {
           responseText += "What looks good:\n";
-          data.what_looks_good.forEach((good: string, index: number) => {
             responseText += `• ${good}\n`;
           });
         }
