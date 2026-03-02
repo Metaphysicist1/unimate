@@ -8,6 +8,7 @@ export async function analyzeDocuments(
   country: string,
   universities: string[],
 ) {
+  console.log("Preparing to send data to backend...");
   const formData = new FormData();
   formData.append("transcript", transcript);
   formData.append("degree", degree);

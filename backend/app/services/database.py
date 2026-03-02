@@ -13,27 +13,28 @@ supabase: Client = create_client(
 class DatabaseService:
     @staticmethod
     async def create_application(
-        email: Optional[str],
-        country: str,
-        universities: list
+        user_prompt: str,
+        country: Optional[str] = None,
+        universities: Optional[str] = None,
+        program: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create new application record"""
         data = {
-            "email": email,
+            "user_prompt": user_prompt,
             "country": country,
             "universities": universities,
-            "status": "processing",
+            "program": program,
             "paid": False
         }
         
-        result = supabase.table("applications").insert(data).execute()
+        result = supabase.table("data_db").insert(data).execute()
         return result.data[0]
     
     @staticmethod
     async def get_application(app_id: str) -> Optional[Dict[str, Any]]:
         """Get application by ID"""
         try:
-            result = supabase.table("applications").select("*").eq("id", app_id).execute()
+            result = supabase.table("data_db").select("*").eq("id", app_id).execute()
         except APIError:
             # Likely an invalid UUID or bad input from client — return None
             return None
@@ -48,7 +49,7 @@ class DatabaseService:
         **kwargs
     ) -> Dict[str, Any]:
         """Update application"""
-        result = supabase.table("applications").update(kwargs).eq("id", app_id).execute()
+        result = supabase.table("analyze_results").update(kwargs).eq("id", app_id).execute()
         return result.data[0]
     
     @staticmethod

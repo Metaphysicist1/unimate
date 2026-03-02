@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
+import Navbar from "@/components/Navbar";
+import DynamicBackground from "@/components/DynamicBackground";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Uni-Assist Checker - Check Your Application",
-  description:
-    "Check if your uni-assist application will get rejected. Free document analysis in 3 minutes.",
+  title: "UniMate - German Admission AI",
+  description: "Check your uni-assist documents with Agentic AI.",
 };
 
 export default function RootLayout({
@@ -17,10 +17,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className={`${inter.className}  text-white selection:bg-blue-500/40`}
+      >
+        {/* These now live globally. They will NEVER stop moving. */}
+        <DynamicBackground />
+        <Navbar />
+
+        {/* Your individual pages load inside here */}
         {children}
-        <Toaster position="top-center" />
       </body>
     </html>
   );

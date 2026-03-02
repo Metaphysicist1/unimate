@@ -3,28 +3,27 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const transcript = formData.get("transcript") as File;
-    const degree = formData.get("degree") as File;
-    const language = formData.get("language") as File;
-    const email = formData.get("email") as string | null;
+    const user_prompt = formData.get("user_prompt") as string;
+    const program = formData.get("program") as string;
     const country = formData.get("country") as string;
     const universities = formData.get("universities") as string;
 
-    if (!transcript || !degree || !language || !country || !universities) {
+    if (!user_prompt) {
       return NextResponse.json(
-        { error: "Missing required files or fields" },
+        { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
     // Forward to backend
     const backendFormData = new FormData();
-    backendFormData.append("transcript", transcript);
-    backendFormData.append("degree", degree);
-    backendFormData.append("language", language);
-    if (email) backendFormData.append("email", email);
     backendFormData.append("country", country);
     backendFormData.append("universities", universities);
+    backendFormData.append("program", program);
+    backendFormData.append(
+      "user_prompt",
+      user_prompt || "Analyze my profile for university admission",
+    ); // fallback if empty
 
     const backendResponse = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/analyze`,

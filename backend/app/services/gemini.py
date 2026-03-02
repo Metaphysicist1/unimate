@@ -35,66 +35,51 @@ class GeminiService:
     
     @staticmethod
     async def analyze_documents(
-        transcript_text: str,
-        degree_text: str,
-        language_text: str,
+        user_prompt: str,
+        program: str,
         country: str,
-        universities: list
+        universities: list,
+        paid: bool = False
     ) -> Dict[Any, Any]:
-        """Analyze documents with Gemini"""
+        """Analyze student application with Gemini"""
         
         prompt = f"""
             You are an expert uni-assist application auditor for German universities.
 
-            Analyze these student documents for common rejection risks:
+            Analyze these student info for common rejection risks:
 
             STUDENT INFO:
             - Country: {country}
             - Target Universities: {', '.join(universities)}
-            - Program: Computer Science / Informatik
+            - Program:  {program[:4000]}
 
-            DOCUMENTS:
-
-            TRANSCRIPT:
-            {transcript_text[:4000]}
-
-            DEGREE CERTIFICATE:
-            {degree_text[:2000]}
-
-            LANGUAGE CERTIFICATE:
-            {language_text[:2000]}
+            account status: {"paid" if paid else "free tier"}
+            Student provided the following additional information:
+            {user_prompt[:4000]}
 
             ANALYSIS CHECKLIST:
 
-            TRANSCRIPT ISSUES:
-            1. Is text clearly readable or appears to be scanned image?
-            2. Shows semester-by-semester breakdown (not just cumulative GPA)?
-            3. Has "contact hours" or "semester hours" column?
-            4. Includes grade scale explanation (e.g., "4.0 scale")?
-            5. Course names are specific (not just codes like "CS 101")?
+            After all checks:
+            ─────────────────────────────
+            SUMMARY OF POTENTIAL PROBLEMS
+            (list only real issues — do not invent problems)
 
-            DEGREE CERTIFICATE ISSUES:
-            1. Mentions apostille or notarization?
-            2. Explicitly states "Bachelor of Science in Computer Science"?
-            3. Is in English or German?
-            4. Graduation date is consistent?
+            MISSING / UNCLEAR INFORMATION
+            (bullet list of every piece of information you still need — be very specific)
 
-            LANGUAGE CERTIFICATE ISSUES:
-            1. Test type identifiable (TestDaF, DSH, Goethe, telc)?
-            2. Level is B2 or higher (not B1, A2, A1)?
-            3. Shows clear "PASSED" statement?
-            4. Certificate less than 2 years old?
+            NEXT QUESTIONS TO USER
+            (numbered list of clear, concrete questions — ask only the most important 3–6 at once)
 
-            COUNTRY-SPECIFIC ({country}):
-            - Common document issues for students from {country}
-            - Apostille requirements
-            - Typical transcript format problems
+            Rules you MUST follow:
+            • Be polite but very direct and formal
+            • Never say “probably”, “maybe”, “looks like” — only facts the user actually told you
+            • If user gave zero information about a document → write: "No information provided about [document type]" and ask whether they have it / plan to describe it
+            • Current date for language certificate age calculation = March 02, 2026 (or tell user the date you're using if they give another one)
+            • For language certificates: only B2 or higher is usually accepted — clearly state if level is too low
+            • If user describes something very vaguely (example: "there is a grade table"), ask for exact wording or structure
+            • Do NOT give overall "pass/fail" verdict unless user explicitly asks for final opinion after providing enough details
 
-            UNIVERSITY-SPECIFIC:
-            - TU Munich: VPD required, separate math courses listing
-            - RWTH Aachen: Strict ECTS conversion
-            - LMU Munich: Vorprüfungsdokumentation for some countries
-            - FU Berlin: More flexible requirements
+            Start every response by briefly confirming which documents the user has already described.
 
             Return ONLY valid JSON (no markdown, no extra text):
 
@@ -141,6 +126,7 @@ class GeminiService:
             response = model.generate_content(prompt)
             text = response.text
             
+
             # Extract JSON from response
             json_text = text
             if '```json' in text:
@@ -148,8 +134,12 @@ class GeminiService:
             elif '```' in text:
                 json_text = text.split('```')[1].split('```')[0].strip()
             
+
             # Parse JSON
             analysis = json.loads(json_text)
+
+            # print(f"Gemini analysis successful. Parsed JSON: {analysis}")
+            
             return analysis
             
         except json.JSONDecodeError as e:

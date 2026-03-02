@@ -1,0 +1,105 @@
+.
+├── a.txt
+├── backend
+│   ├── app
+│   │   ├── agent
+│   │   │   └── graph.py
+│   │   ├── api
+│   │   │   ├── analyze.py
+│   │   │   ├── __init__.py
+│   │   │   ├── payment.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── analyze.cpython-310.pyc
+│   │   │   │   ├── __init__.cpython-310.pyc
+│   │   │   │   ├── payment.cpython-310.pyc
+│   │   │   │   └── webhook.cpython-310.pyc
+│   │   │   └── webhook.py
+│   │   ├── core
+│   │   │   ├── config.py
+│   │   │   └── __pycache__
+│   │   │       └── config.cpython-310.pyc
+│   │   ├── __init__.py
+│   │   ├── models
+│   │   │   ├── __pycache__
+│   │   │   │   └── schemas.cpython-310.pyc
+│   │   │   └── schemas.py
+│   │   ├── __pycache__
+│   │   │   └── __init__.cpython-310.pyc
+│   │   └── services
+│   │       ├── database.py
+│   │       ├── gemini.py
+│   │       ├── __init__.py
+│   │       ├── pdf_extractor.py
+│   │       ├── pdf_processor.py
+│   │       └── __pycache__
+│   │           ├── database.cpython-310.pyc
+│   │           ├── gemini.cpython-310.pyc
+│   │           ├── __init__.cpython-310.pyc
+│   │           ├── pdf_extractor.cpython-310.pyc
+│   │           └── pdf_processor.cpython-310.pyc
+│   ├── Dockerfile
+│   ├── main.py
+│   ├── __pycache__
+│   │   └── main.cpython-310.pyc
+│   └── requirements.txt
+├── frontend
+│   ├── app
+│   │   ├── about
+│   │   │   └── page.tsx
+│   │   ├── api
+│   │   │   ├── analyze
+│   │   │   │   └── route.ts
+│   │   │   ├── debug-supabase
+│   │   │   │   └── route.ts
+│   │   │   └── results
+│   │   │       └── [id]
+│   │   │           └── route.ts
+│   │   ├── check
+│   │   │   ├── [id]
+│   │   │   │   └── page.tsx
+│   │   │   └── page.tsx
+│   │   ├── contact
+│   │   │   └── page.tsx
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   ├── pricing
+│   │   │   └── page.tsx
+│   │   ├── results
+│   │   │   └── [id]
+│   │   │       └── page.tsx
+│   │   └── stories
+│   │       └── page.tsx
+│   ├── a.txt
+│   ├── components
+│   │   ├── DynamicBackground.tsx
+│   │   ├── Footer.tsx
+│   │   ├── issue-card.tsx
+│   │   ├── Navbar.tsx
+│   │   ├── risk-badge.tsx
+│   │   ├── shared
+│   │   ├── ui
+│   │   │   ├── alert.tsx
+│   │   │   ├── badge.tsx
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── chat.tsx
+│   │   │   └── progress.tsx
+│   │   └── upload-zone.tsx
+│   ├── components.json
+│   ├── lib
+│   │   ├── api.ts
+│   │   ├── supabase
+│   │   │   ├── client.ts
+│   │   │   └── server.ts
+│   │   └── utils.ts
+│   ├── next.config.js
+│   ├── next-env.d.ts
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── postcss.config.js
+│   ├── tailwind.config.ts
+│   └── tsconfig.json
+└── README.md
+
+33 directories, 69 files

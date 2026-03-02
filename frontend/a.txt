@@ -1,6 +1,8 @@
 .
 ├── app
 │   ├── api
+│   │   ├── analyze
+│   │   │   └── route.ts
 │   │   ├── debug-supabase
 │   │   │   └── route.ts
 │   │   └── results
@@ -22,10 +24,13 @@
 │   ├── issue-card.tsx
 │   ├── Navbar.tsx
 │   ├── risk-badge.tsx
+│   ├── shared
 │   ├── ui
+│   │   ├── alert.tsx
 │   │   ├── badge.tsx
 │   │   ├── button.tsx
 │   │   ├── card.tsx
+│   │   ├── chat.tsx
 │   │   └── progress.tsx
 │   └── upload-zone.tsx
 ├── components.json
@@ -43,4 +48,4 @@
 ├── tailwind.config.ts
 └── tsconfig.json
 
-13 directories, 30 files
+15 directories, 33 files

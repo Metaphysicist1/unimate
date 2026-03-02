@@ -32,23 +32,21 @@ export function UploadZone({ label, onFileSelect }: UploadZoneProps) {
   }, []);
 
   return (
+    // Inside your return statement:
     <div
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
       onClick={handleClick}
-      className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-500 transition"
+      className="group relative border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center cursor-pointer 
+             hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300 ease-in-out"
     >
-      <p className="font-medium">{label}</p>
-      <p className="text-sm text-gray-500 mt-2">
-        Drag & drop or click to select
+      <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+        <span className="text-2xl">📄</span>
+      </div>
+      <p className="font-semibold text-slate-900">{label}</p>
+      <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-medium">
+        PDF only • Max 5MB
       </p>
-      <input
-        ref={inputRef}
-        type="file"
-        onChange={handleChange}
-        className="hidden"
-        accept=".pdf,.doc,.docx"
-      />
     </div>
   );
 }
