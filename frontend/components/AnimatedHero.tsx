@@ -4,8 +4,11 @@ import { motion } from "framer-motion";
 import { ReactNode } from "react";
 import { Zap } from "lucide-react";
 import { ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AnimatedHero({ children }: { children: ReactNode }) {
+  const router = useRouter();
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -30 }}

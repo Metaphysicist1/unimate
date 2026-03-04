@@ -22,8 +22,6 @@ const AnimatedHero = dynamic(() => import("@/components/AnimatedHero"), {
 });
 
 export default function HomePage() {
-  const router = useRouter();
-
   return (
     <div className="relative min-h-screen text-white selection:bg-blue-500/40 overflow-hidden">
       {/* 3D COSMIC BACKGROUND — now safely client-only */}
