@@ -9,6 +9,7 @@ import {
   Mail,
   UserCircle,
   Zap,
+  Sparkles,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -35,6 +36,11 @@ export default function Navbar() {
       name: "About Us",
       path: "/about",
       icon: <Fingerprint size={16} className="mr-2 inline-block opacity-70" />,
+    },
+    {
+      name: "Hero",
+      path: "/hero",
+      icon: <Sparkles size={16} className="mr-2 inline-block opacity-70" />,
     },
   ];
 

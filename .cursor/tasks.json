@@ -1,0 +1,47 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend → python main.py",
+      "type": "shell",
+      "command": "source ${workspaceFolder}/backend/.venv/bin/activate && cd ${workspaceFolder}/backend && python main.py",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "isBackground": true,
+      "group": "none"
+    },
+    {
+      "label": "Frontend → npm run dev",
+      "type": "shell",
+      "command": "cd ${workspaceFolder}/frontend && npm run dev",
+      "problemMatcher": ["$vite"], // excellent choice
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "isBackground": true,
+      "group": "none"
+    },
+    {
+      "label": "Start Fullstack (Backend + Frontend)",
+      "dependsOn": ["Backend → python main.py", "Frontend → npm run dev"],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

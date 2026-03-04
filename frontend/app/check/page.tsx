@@ -29,9 +29,6 @@ export default function CheckPage() {
 
           {/* Chat Container - flex-1 forces it to fill space, min-h-0 prevents overflow */}
           <div className="flex-1 min-h-0 relative">
-            <h1 style={{ color: "red" }}>
-              THIS IS THE CHAT COMPONENT – YOU ARE HERE
-            </h1>
             <Chat
               api={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/analyze`}
               placeholder="Type your prompt, upload a PDF, or fill the fields below..."

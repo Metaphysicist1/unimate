@@ -84,16 +84,15 @@ export function Chat({
         data.issues_found.forEach((issue: any, index: number) => {
           responseText += `${index + 1}. ${issue.title} (${issue.severity})\n${issue.description}\n\n`;
         });
-        if (data.what_looks_good && data.what_looks_good.length > 0) {
-          responseText += "What looks good:\n";
-            responseText += `• ${good}\n`;
-          });
+        if (data.what_looks_good?.length) {
+          responseText += `• ${data.what_looks_good.join("\n• ")}\n`;
         }
       } else {
         responseText = JSON.stringify(data, null, 2);
       }
 
-      setMessages((prev) => [        ...prev,
+      setMessages((prev) => [
+        ...prev,
         {
           id: Date.now().toString(),
           role: "assistant",
@@ -195,16 +194,6 @@ export function Chat({
             </Button>
           </div>
         </form>
-        <button
-          type="button"
-          onClick={() => {
-            console.log("FORCED TEST BUTTON CLICKED");
-            handleSend({ preventDefault: () => {} } as any);
-          }}
-          className="bg-red-600 text-white p-4 m-4"
-        >
-          FORCE RUN handleSend
-        </button>
       </div>
     </div>
   );
