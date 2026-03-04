@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str
     
     # CORS
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://uniassist-checker.vercel.app"
     
     # Storage
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB

@@ -20,3 +20,6 @@ coverage/
 *.sublime-project
 *.sublime-workspace
 .next/
+.env.example
+backend/.env
+.env.local
