@@ -25,14 +25,21 @@ export async function POST(request: NextRequest) {
       user_prompt || "Analyze my profile for university admission",
     ); // fallback if empty
 
-    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
-    const backendResponse = await fetch(
-      `${backendUrl}/api/analyze`,
-      {
-        method: "POST",
-        body: backendFormData,
-      },
-    );
+    const backendUrl = process.env.BACKEND_URL || process.env.BACKEND_URL;
+    if (!backendUrl) {
+      return NextResponse.json(
+        {
+          error:
+            "Backend URL is not configured. Set BACKEND_URL in Vercel environment variables.",
+        },
+        { status: 503 },
+      );
+    }
+
+    const backendResponse = await fetch(`${backendUrl}/api/analyze`, {
+      method: "POST",
+      body: backendFormData,
+    });
 
     if (!backendResponse.ok) {
       const errorData = await backendResponse.json();

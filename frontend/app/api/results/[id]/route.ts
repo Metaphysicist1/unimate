@@ -19,7 +19,7 @@ export async function GET(
     }
 
     // Forward to backend
-    const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/results/${id}?paid=${paid}`;
+    const backendUrl = `${process.env.BACKEND_URL}/api/results/${id}?paid=${paid}`;
     console.log("[RESULTS-API] Forwarding to:", backendUrl);
 
     const backendResponse = await fetch(backendUrl, {

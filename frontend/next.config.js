@@ -3,7 +3,7 @@ const nextConfig = {
   transpilePackages: ["framer-motion"],
   reactStrictMode: true,
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    BACKEND_URL: process.env.BACKEND_URL,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   },
