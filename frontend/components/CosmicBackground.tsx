@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useRef } from "react";
+import React, { Suspense, useRef, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { KernelSize } from "postprocessing";
@@ -10,20 +10,26 @@ import * as THREE from "three";
 /* ====================== PARTICLE RIVER ONLY ====================== */
 const ParticleRiver = () => {
   const pointsRef = useRef<THREE.Points>(null!);
-  const count = 4200; // more particles for richer feel
-  const positions = new Float32Array(count * 3);
-  const speeds = new Float32Array(count);
+  const count = 4200;
 
-  // Initialize swirling cosmic particle field
-  for (let i = 0; i < count * 3; i += 3) {
-    const radius = 40 + Math.random() * 55;
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
-    positions[i] = radius * Math.sin(phi) * Math.cos(theta);
-    positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta) - 8;
-    positions[i + 2] = radius * Math.cos(phi) * 0.6;
-    speeds[i / 3] = 0.006 + Math.random() * 0.018;
-  }
+  const { geometry, speeds } = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    const spd = new Float32Array(count);
+
+    for (let i = 0; i < count * 3; i += 3) {
+      const radius = 40 + Math.random() * 55;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      positions[i] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta) - 8;
+      positions[i + 2] = radius * Math.cos(phi) * 0.6;
+      spd[i / 3] = 0.006 + Math.random() * 0.018;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    return { geometry: geo, speeds: spd };
+  }, []);
 
   useFrame((state) => {
     if (!pointsRef.current) return;
@@ -33,7 +39,6 @@ const ParticleRiver = () => {
 
     for (let i = 0; i < count * 3; i += 3) {
       const idx = i / 3;
-      // Gentle swirling + vertical flow
       pos.array[i + 1] +=
         Math.sin(time * 1.1 + pos.array[i] * 0.04) * speeds[idx] * 0.45;
       pos.array[i] +=
@@ -41,21 +46,13 @@ const ParticleRiver = () => {
       pos.array[i + 2] +=
         Math.sin(time * 0.6 + pos.array[i + 1] * 0.03) * speeds[idx] * 0.2;
 
-      // Reset particles that drift too far (infinite river effect)
       if (Math.abs(pos.array[i + 1]) > 75) pos.array[i + 1] = -70;
     }
     pos.needsUpdate = true;
   });
 
   return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-          count={count}
-        />
-      </bufferGeometry>
+    <points ref={pointsRef} geometry={geometry}>
       <pointsMaterial
         color="#a0d8ff"
         size={0.06}
