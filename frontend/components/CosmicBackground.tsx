@@ -52,9 +52,8 @@ const ParticleRiver = () => {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
+          args={[positions, 3]}
           count={count}
-          array={positions}
-          itemSize={3}
         />
       </bufferGeometry>
       <pointsMaterial
