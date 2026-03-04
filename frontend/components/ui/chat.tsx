@@ -1,21 +1,16 @@
 "use client";
 
-console.log("===== CHAT.TSX FILE HAS STARTED EXECUTING =====");
-
 import React, { useState } from "react";
 import {
   Send,
   Bot,
-  User,
-  Paperclip,
   School,
   Globe,
   GraduationCap,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import router from "next/dist/shared/lib/router/router";
-import { form } from "framer-motion/client";
+import { motion } from "framer-motion";
 
 interface Message {
   id: string;
@@ -24,13 +19,11 @@ interface Message {
 }
 
 export function Chat({
-  api,
   placeholder,
 }: {
-  api: string;
   placeholder?: string;
 }) {
-  const [user_prompt, setInput] = useState("");
+  const [userPrompt, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -39,53 +32,50 @@ export function Chat({
         "System Initialized. Provide your university details and upload your transcript to check Anabin recognition.",
     },
   ]);
-  console.log("Chat component initialized with API endpoint:", api);
-  // --- NEW: ANABIN STATES ---
   const [universities, setUniversity] = useState("");
   const [program, setProgram] = useState("");
   const [country, setCountry] = useState("");
-  // const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // --- NEW: SEND FUNCTION ---
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
 
-    console.log("handleSend → FUNCTION BODY EXECUTED");
+    const text = userPrompt.trim();
+    if (!text || loading) return;
 
-    const text = user_prompt.trim();
-    console.log("Text that would be sent:", text || "(empty)");
-
-    if (!text) return;
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now().toString(), role: "user", content: text },
+    ]);
+    setInput("");
+    setLoading(true);
 
     try {
-      console.log("Creating FormData...");
       const formData = new FormData();
       formData.append("user_prompt", text);
       formData.append("universities", universities);
       formData.append("program", program);
       formData.append("country", country);
 
-      console.log("Calling fetch to:", api);
-
-      const res = await fetch(api, { method: "POST", body: formData });
-
-      console.log("Fetch finished → status:", res.status);
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        body: formData,
+      });
 
       const data = await res.json();
-      console.log("Backend data:", data);
 
-      // Handle different response formats
       let responseText = "";
-      if (data.gemini_output) {
+      if (data.error) {
+        responseText = `Error: ${data.error}`;
+      } else if (data.gemini_output) {
         responseText = data.gemini_output;
       } else if (data.issues_found && Array.isArray(data.issues_found)) {
-        // Format the structured response into a readable message
-        responseText = `Analysis Complete:\n\nRisk Level: ${data.overall_risk}\nRejection Probability: ${data.rejection_probability}%\n\nIssues Found:\n`;
+        responseText = `**Analysis Complete**\n\nRisk Level: ${data.overall_risk}\nRejection Probability: ${data.rejection_probability}%\n\nIssues Found:\n`;
         data.issues_found.forEach((issue: any, index: number) => {
           responseText += `${index + 1}. ${issue.title} (${issue.severity})\n${issue.description}\n\n`;
         });
         if (data.what_looks_good?.length) {
-          responseText += `• ${data.what_looks_good.join("\n• ")}\n`;
+          responseText += `Strengths:\n• ${data.what_looks_good.join("\n• ")}\n`;
         }
       } else {
         responseText = JSON.stringify(data, null, 2);
@@ -94,13 +84,22 @@ export function Chat({
       setMessages((prev) => [
         ...prev,
         {
-          id: Date.now().toString(),
+          id: (Date.now() + 1).toString(),
           role: "assistant",
           content: responseText,
         },
       ]);
     } catch (err) {
-      console.error("handleSend error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "Failed to reach the analysis server. Please try again.",
+        },
+      ]);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -180,7 +179,7 @@ export function Chat({
             <input
               id="uni-mate-input"
               name="uni-mate-message"
-              value={user_prompt}
+              value={userPrompt}
               onChange={(e) => setInput(e.target.value)}
               placeholder={placeholder || "Ask or describe your case..."}
               className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none"
@@ -188,9 +187,10 @@ export function Chat({
 
             <Button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl disabled:opacity-50"
             >
-              <Send size={18} />
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </Button>
           </div>
         </form>

@@ -25,8 +25,9 @@ export async function POST(request: NextRequest) {
       user_prompt || "Analyze my profile for university admission",
     ); // fallback if empty
 
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
     const backendResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/analyze`,
+      `${backendUrl}/api/analyze`,
       {
         method: "POST",
         body: backendFormData,
