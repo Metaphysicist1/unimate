@@ -37,11 +37,6 @@ export default function Navbar() {
       path: "/about",
       icon: <Fingerprint size={16} className="mr-2 inline-block opacity-70" />,
     },
-    {
-      name: "Hero",
-      path: "/hero",
-      icon: <Sparkles size={16} className="mr-2 inline-block opacity-70" />,
-    },
   ];
 
   return (

@@ -1,22 +1,31 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Zap, ArrowRight } from "lucide-react";
+import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
-import CosmicBackground from "@/components/CosmicBackground";
+
+// Dynamic import with NO server-side rendering (this is the fix!)
+const CosmicBackground = dynamic(
+  () => import("@/components/CosmicBackground"),
+  {
+    ssr: false, // ← THIS STOPS THE ERROR
+    loading: () => <div className="absolute inset-0 bg-zinc-950" />, // optional nice placeholder
+  },
+);
 
 export default function HomePage() {
   const router = useRouter();
 
   return (
     <div className="relative min-h-screen text-white selection:bg-blue-500/40 overflow-hidden">
-      {/* 3D COSMIC BACKGROUND */}
+      {/* 3D COSMIC BACKGROUND — now safely client-only */}
       <CosmicBackground />
 
       <Navbar />
 
-      {/* FIX 2: pt-40 + flex items-center for perfect vertical balance */}
       <main className="relative z-10 container mx-auto px-6 min-h-screen flex items-center pt-20 pb-20">
         <div className="grid lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
           <motion.div
@@ -28,7 +37,6 @@ export default function HomePage() {
               <Zap className="w-3 h-3 animate-pulse" /> Agentic Analysis 2026
             </div>
 
-            {/* FIX 3: text-white */}
             <h1 className="text-7xl lg:text-8xl font-black italic tracking-tighter leading-[0.9] text-white">
               UNI<span className="text-blue-500">MATE</span>
             </h1>
@@ -51,7 +59,6 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* Right side ready for anything later (chat preview, etc.) */}
           <div className="hidden lg:block" />
         </div>
       </main>
