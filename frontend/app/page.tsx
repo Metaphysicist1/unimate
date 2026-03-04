@@ -7,6 +7,16 @@ import { Zap, ArrowRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 
+const MotionDiv = dynamic(
+  () => import("framer-motion").then((mod) => mod.motion.div),
+  { ssr: false },
+);
+
+const AnimatePresence = dynamic(
+  () => import("framer-motion").then((mod) => mod.AnimatePresence),
+  { ssr: false },
+);
+
 // Dynamic import with NO server-side rendering (this is the fix!)
 const CosmicBackground = dynamic(
   () => import("@/components/CosmicBackground"),
@@ -28,7 +38,7 @@ export default function HomePage() {
 
       <main className="relative z-10 container mx-auto px-6 min-h-screen flex items-center pt-20 pb-20">
         <div className="grid lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             className="space-y-8"
@@ -57,7 +67,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               </button>
             </div>
-          </motion.div>
+          </MotionDiv>
 
           <div className="hidden lg:block" />
         </div>
