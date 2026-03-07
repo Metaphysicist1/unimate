@@ -53,6 +53,9 @@ def _build_initial_state(request: ChatRequest) -> dict:
         "supervisor_reasoning": "",
         "iteration": 0,
         "search_query": "",
+        "research_depth": 0,
+        "research_queries_used": [],
+        "citations": [],
         "missing_fields": [],
         "conflicts": [],
         "follow_up_question": "",
@@ -98,7 +101,7 @@ async def _stream_agent(request: ChatRequest) -> AsyncGenerator[str, None]:
     try:
         async for event in graph.astream(initial_state, config=config, stream_mode="updates"):
             for node_name, node_output in event.items():
-                yield _sse_event("node_update", {
+                node_data = {
                     "node": node_name,
                     "supervisor_action": node_output.get("supervisor_action", ""),
                     "supervisor_reasoning": node_output.get("supervisor_reasoning", ""),
@@ -106,7 +109,19 @@ async def _stream_agent(request: ChatRequest) -> AsyncGenerator[str, None]:
                     "missing_fields": node_output.get("missing_fields", []),
                     "seconds_saved": node_output.get("seconds_saved", 0),
                     "follow_up_question": node_output.get("follow_up_question", ""),
-                })
+                }
+                yield _sse_event("node_update", node_data)
+
+                if node_name in ("researcher", "deep_researcher"):
+                    depth = node_output.get("research_depth", 0)
+                    queries = node_output.get("research_queries_used", [])
+                    citation_count = len(node_output.get("citations", []))
+                    yield _sse_event("research_progress", {
+                        "depth": depth,
+                        "queries_used": queries[-3:],
+                        "citation_count": citation_count,
+                        "phase": "core" if depth <= 1 else "nested",
+                    })
 
                 if node_output.get("final_response"):
                     yield _sse_event("final", node_output["final_response"])

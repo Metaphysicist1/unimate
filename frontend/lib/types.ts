@@ -56,10 +56,29 @@ export const CONTEXT_FIELD_META: Record<ContextFieldKey, { label: string; icon: 
   gpa_estimated: { label: "GPA", icon: "BarChart3" },
 };
 
+// ── Citation & suggested action types ─────────────────────────────────
+
+export interface Citation {
+  fact: string;
+  source_url: string;
+  source_title: string;
+  last_verified: string;
+}
+
+export interface SuggestedAction {
+  label: string;
+  intent: string;
+  icon: string;
+}
+
+// ── Agent response data ───────────────────────────────────────────────
+
 export interface AgentData {
   answer: string;
   sources: string[];
+  citations?: Citation[];
   next_steps: string[];
+  suggested_actions?: SuggestedAction[];
   readiness_score?: number;
   missing_fields?: string[];
   seconds_saved?: number;
@@ -77,6 +96,13 @@ export interface SSENodeUpdate {
   follow_up_question: string;
 }
 
+export interface SSEResearchProgress {
+  depth: number;
+  queries_used: string[];
+  citation_count: number;
+  phase: "core" | "nested";
+}
+
 export interface SSEFinalEvent {
   status: string;
   data: AgentData;
@@ -86,6 +112,7 @@ export type SSEEvent =
   | { type: "session"; data: { session_id: string } }
   | { type: "status"; data: { node: string; phase: string } }
   | { type: "node_update"; data: SSENodeUpdate }
+  | { type: "research_progress"; data: SSEResearchProgress }
   | { type: "final"; data: SSEFinalEvent }
   | { type: "error"; data: { detail: string } }
   | { type: "done"; data: { session_id: string } };
@@ -100,6 +127,8 @@ export interface TrackerState {
   supervisorReasoning: string;
   hint: string | null;
   isProcessing: boolean;
+  researchPhase?: "core" | "nested" | null;
+  citationCount?: number;
 }
 
 export const FIELD_HINTS: Record<string, string> = {

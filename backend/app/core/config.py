@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     else:
         FRONTEND_URL: str = Field(default="https://uniassist-checker.vercel.app")
 
+    # Search (optional — set SERPER_API_KEY in .env to use Serper instead of DuckDuckGo)
+    SERPER_API_KEY: str = ""
+
     # LangSmith (optional — set LANGCHAIN_API_KEY in .env to enable)
     LANGCHAIN_TRACING_V2: bool = False
     LANGCHAIN_API_KEY: str = ""

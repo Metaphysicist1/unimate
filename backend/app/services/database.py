@@ -150,5 +150,49 @@ class DatabaseService:
         except APIError:
             return None
 
+    # ── Research log methods ──────────────────────────────────────────
+
+    @staticmethod
+    async def find_cached_research(query_hash: str) -> Optional[Dict[str, Any]]:
+        """Check if a search query was already executed (cache hit)."""
+        try:
+            result = (
+                supabase.table("research_logs")
+                .select("*")
+                .eq("query_hash", query_hash)
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            return result.data[0] if result.data else None
+        except APIError:
+            return None
+
+    @staticmethod
+    async def log_research(
+        session_id: str,
+        query: str,
+        query_hash: str,
+        provider: str,
+        results: list,
+        depth_level: int = 1,
+    ) -> Dict[str, Any]:
+        """Log a search query and its results for deduplication."""
+        data = {
+            "session_id": session_id,
+            "query": query,
+            "query_hash": query_hash,
+            "provider": provider,
+            "results": json.dumps(results),
+            "result_count": len(results),
+            "depth_level": depth_level,
+        }
+        try:
+            result = supabase.table("research_logs").insert(data).execute()
+            return result.data[0] if result.data else data
+        except Exception as e:
+            print(f"Failed to log research: {e}")
+            return data
+
 
 db = DatabaseService()

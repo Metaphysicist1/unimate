@@ -10,6 +10,7 @@ import {
   TrendingUp,
   AlertCircle,
   Loader2,
+  BookOpen,
 } from "lucide-react";
 import type { TrackerState } from "@/lib/types";
 
@@ -43,6 +44,7 @@ const NODE_LABELS: Record<string, string> = {
   extraction_agent: "Asking for details...",
   clarification_agent: "Resolving conflict...",
   researcher: "Searching web...",
+  deep_researcher: "Deep research...",
   db_retriever: "Checking database...",
   strategist: "Analyzing application...",
 };
@@ -120,6 +122,30 @@ export function SuccessTracker({ tracker }: SuccessTrackerProps) {
               {tracker.supervisorReasoning && (
                 <p className="text-[10px] text-blue-400/60 truncate">
                   {tracker.supervisorReasoning}
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Research Progress ── */}
+      <AnimatePresence>
+        {tracker.researchPhase && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center gap-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-3 py-2.5"
+          >
+            <BookOpen size={14} className="text-cyan-400 shrink-0" />
+            <div>
+              <p className="text-xs font-medium text-cyan-300">
+                {tracker.researchPhase === "core" ? "Finding core requirements..." : "Drilling into specifics..."}
+              </p>
+              {(tracker.citationCount ?? 0) > 0 && (
+                <p className="text-[10px] text-cyan-400/70">
+                  {tracker.citationCount} sources cited
                 </p>
               )}
             </div>

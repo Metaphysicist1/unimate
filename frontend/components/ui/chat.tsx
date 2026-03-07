@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Bot, Loader2, ExternalLink, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { CitationList } from "@/components/citation-list";
+import { NextStepButtons } from "@/components/next-step-buttons";
 import type { AgentData, UserContext } from "@/lib/types";
 
 interface StreamMessage {
@@ -33,8 +35,7 @@ export function Chat({
   const [internalMessages, setInternalMessages] = useState<StreamMessage[]>([
     {
       role: "assistant",
-      content:
-        "Your profile is loaded. Ask anything about your uni-assist application.",
+      content: "Your profile is loaded. Ask anything about your uni-assist application.",
     },
   ]);
   const [internalLoading, setInternalLoading] = useState(false);
@@ -50,6 +51,15 @@ export function Chat({
       behavior: "smooth",
     });
   }, [messages]);
+
+  const dispatchMessage = useCallback(
+    (text: string) => {
+      if (onSendMessage) {
+        onSendMessage(text);
+      }
+    },
+    [onSendMessage],
+  );
 
   const handleSend = useCallback(
     async (e: React.FormEvent) => {
@@ -76,9 +86,7 @@ export function Chat({
             session_id: sessionId,
             country: context?.target_country || undefined,
             program: context?.target_program || undefined,
-            universities: context?.target_university
-              ? [context.target_university]
-              : [],
+            universities: context?.target_university ? [context.target_university] : [],
             degree_type: context?.degree_type || undefined,
             language_level: context?.language_level || undefined,
             gpa_estimated: context?.gpa_estimated,
@@ -99,10 +107,7 @@ export function Chat({
       } catch {
         setInternalMessages((prev) => [
           ...prev,
-          {
-            role: "assistant",
-            content: "Failed to reach the server. Please try again.",
-          },
+          { role: "assistant", content: "Failed to reach the server. Please try again." },
         ]);
       } finally {
         setInternalLoading(false);
@@ -111,12 +116,23 @@ export function Chat({
     [userPrompt, loading, onSendMessage, sessionId, context],
   );
 
+  const handleButtonAction = useCallback(
+    (intent: string) => {
+      dispatchMessage(intent);
+    },
+    [dispatchMessage],
+  );
+
+  const isLastAssistant = (idx: number) => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") return i === idx;
+    }
+    return false;
+  };
+
   return (
     <div className="flex flex-col h-full bg-transparent font-sans">
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
         {messages.map((m, idx) => (
           <motion.div
             key={idx}
@@ -138,17 +154,18 @@ export function Chat({
             >
               <p className="whitespace-pre-wrap">{m.content}</p>
 
-              {m.role === "assistant" && m.data?.sources?.length ? (
+              {/* Citations */}
+              {m.role === "assistant" && m.data?.citations?.length ? (
+                <CitationList citations={m.data.citations} />
+              ) : null}
+
+              {/* Legacy source URLs (fallback) */}
+              {m.role === "assistant" && !m.data?.citations?.length && m.data?.sources?.length ? (
                 <div className="mt-3 pt-3 border-t border-white/10">
-                  <p className="text-xs font-semibold text-blue-400 mb-1.5">
-                    Sources
-                  </p>
+                  <p className="text-xs font-semibold text-blue-400 mb-1.5">Sources</p>
                   <ul className="space-y-1">
                     {m.data.sources.map((src, i) => (
-                      <li
-                        key={i}
-                        className="flex items-center gap-1.5 text-xs text-slate-400"
-                      >
+                      <li key={i} className="flex items-center gap-1.5 text-xs text-slate-400">
                         <ExternalLink size={10} className="shrink-0" />
                         {src.startsWith("http") ? (
                           <a
@@ -168,26 +185,30 @@ export function Chat({
                 </div>
               ) : null}
 
+              {/* Next steps (text) */}
               {m.role === "assistant" && m.data?.next_steps?.length ? (
                 <div className="mt-3 pt-3 border-t border-white/10">
-                  <p className="text-xs font-semibold text-emerald-400 mb-1.5">
-                    Next Steps
-                  </p>
+                  <p className="text-xs font-semibold text-emerald-400 mb-1.5">Next Steps</p>
                   <ul className="space-y-1">
                     {m.data.next_steps.map((step, i) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-1.5 text-xs text-slate-300"
-                      >
-                        <ArrowRight
-                          size={10}
-                          className="mt-0.5 shrink-0 text-emerald-400"
-                        />
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-slate-300">
+                        <ArrowRight size={10} className="mt-0.5 shrink-0 text-emerald-400" />
                         <span>{step}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
+              ) : null}
+
+              {/* Interactive next-step buttons (only on the latest assistant message) */}
+              {m.role === "assistant" &&
+                isLastAssistant(idx) &&
+                m.data?.suggested_actions?.length ? (
+                <NextStepButtons
+                  actions={m.data.suggested_actions}
+                  onAction={handleButtonAction}
+                  disabled={loading}
+                />
               ) : null}
             </div>
           </motion.div>
@@ -212,10 +233,7 @@ export function Chat({
 
       {/* Input */}
       <div className="p-4 bg-white/5 border-t border-white/5 backdrop-blur-md">
-        <form
-          className="max-w-3xl mx-auto flex items-center gap-2"
-          onSubmit={handleSend}
-        >
+        <form className="max-w-3xl mx-auto flex items-center gap-2" onSubmit={handleSend}>
           <input
             id="uni-mate-input"
             name="uni-mate-message"
@@ -224,17 +242,12 @@ export function Chat({
             placeholder={placeholder || "Ask about your application..."}
             className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none"
           />
-
           <Button
             type="submit"
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl disabled:opacity-50"
           >
-            {loading ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <Send size={18} />
-            )}
+            {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </Button>
         </form>
       </div>

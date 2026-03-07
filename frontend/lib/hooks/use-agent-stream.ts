@@ -5,6 +5,7 @@ import type {
   TrackerState,
   AgentData,
   SSENodeUpdate,
+  SSEResearchProgress,
   UserContext,
 } from "@/lib/types";
 import { FIELD_HINTS as HINTS } from "@/lib/types";
@@ -44,6 +45,8 @@ export function useAgentStream(): UseAgentStreamReturn {
     supervisorReasoning: "",
     hint: null,
     isProcessing: false,
+    researchPhase: null,
+    citationCount: 0,
   });
   const [messages, setMessages] = useState<StreamMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -159,6 +162,15 @@ export function useAgentStream(): UseAgentStreamReturn {
           secondsSaved: final.data.seconds_saved ?? prev.secondsSaved,
           hint: pickHint(final.data.missing_fields ?? prev.missingFields),
           isProcessing: false,
+        }));
+        break;
+      }
+      case "research_progress": {
+        const rp = data as unknown as SSEResearchProgress;
+        setTracker((prev) => ({
+          ...prev,
+          researchPhase: rp.phase,
+          citationCount: rp.citation_count,
         }));
         break;
       }
