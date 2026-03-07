@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Send,
   Bot,
@@ -8,34 +8,48 @@ import {
   Globe,
   GraduationCap,
   Loader2,
+  ExternalLink,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+
+interface AgentData {
+  answer: string;
+  sources: string[];
+  next_steps: string[];
+}
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  data?: AgentData;
 }
 
-export function Chat({
-  placeholder,
-}: {
-  placeholder?: string;
-}) {
+export function Chat({ placeholder }: { placeholder?: string }) {
   const [userPrompt, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
       content:
-        "System Initialized. Provide your university details and upload your transcript to check Anabin recognition.",
+        "System Initialized. Provide your university details and describe your case to check your uni-assist application.",
     },
   ]);
   const [universities, setUniversity] = useState("");
   const [program, setProgram] = useState("");
   const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessionId] = useState(() => crypto.randomUUID());
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -51,45 +65,33 @@ export function Chat({
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("user_prompt", text);
-      formData.append("universities", universities);
-      formData.append("program", program);
-      formData.append("country", country);
-
-      const res = await fetch("/api/analyze", {
+      const res = await fetch("/api/chat", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          session_id: sessionId,
+          country: country || undefined,
+          program: program || undefined,
+          universities: universities
+            ? universities.split(",").map((u) => u.trim())
+            : [],
+        }),
       });
 
-      const data = await res.json();
-
-      let responseText = "";
-      if (data.error) {
-        responseText = `Error: ${data.error}`;
-      } else if (data.gemini_output) {
-        responseText = data.gemini_output;
-      } else if (data.issues_found && Array.isArray(data.issues_found)) {
-        responseText = `**Analysis Complete**\n\nRisk Level: ${data.overall_risk}\nRejection Probability: ${data.rejection_probability}%\n\nIssues Found:\n`;
-        data.issues_found.forEach((issue: any, index: number) => {
-          responseText += `${index + 1}. ${issue.title} (${issue.severity})\n${issue.description}\n\n`;
-        });
-        if (data.what_looks_good?.length) {
-          responseText += `Strengths:\n• ${data.what_looks_good.join("\n• ")}\n`;
-        }
-      } else {
-        responseText = JSON.stringify(data, null, 2);
-      }
+      const json = await res.json();
+      const data: AgentData | undefined = json?.data;
 
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: responseText,
+          content: data?.answer ?? JSON.stringify(json, null, 2),
+          data: data,
         },
       ]);
-    } catch (err) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -105,7 +107,10 @@ export function Chat({
 
   return (
     <div className="flex flex-col h-full bg-transparent font-sans">
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide"
+      >
         {messages.map((m) => (
           <motion.div
             key={m.id}
@@ -114,23 +119,85 @@ export function Chat({
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} items-start gap-3`}
           >
             {m.role === "assistant" && (
-              <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
                 <Bot size={16} />
               </div>
             )}
             <div
-              className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-lg ${m.role === "user" ? "bg-blue-600 text-white" : "glass-panel text-slate-200 border-white/5"}`}
+              className={`max-w-[85%] rounded-2xl text-sm leading-relaxed shadow-lg ${
+                m.role === "user"
+                  ? "bg-blue-600 text-white px-4 py-3"
+                  : "glass-panel text-slate-200 border-white/5 px-4 py-3"
+              }`}
             >
-              {m.content}
+              <p className="whitespace-pre-wrap">{m.content}</p>
+
+              {m.role === "assistant" && m.data?.sources?.length ? (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <p className="text-xs font-semibold text-blue-400 mb-1.5">
+                    Sources
+                  </p>
+                  <ul className="space-y-1">
+                    {m.data.sources.map((src, i) => (
+                      <li key={i} className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <ExternalLink size={10} className="shrink-0" />
+                        {src.startsWith("http") ? (
+                          <a
+                            href={src}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-blue-400 transition-colors truncate"
+                          >
+                            {src}
+                          </a>
+                        ) : (
+                          <span>{src}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {m.role === "assistant" && m.data?.next_steps?.length ? (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <p className="text-xs font-semibold text-emerald-400 mb-1.5">
+                    Next Steps
+                  </p>
+                  <ul className="space-y-1">
+                    {m.data.next_steps.map((step, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-slate-300">
+                        <ArrowRight size={10} className="mt-0.5 shrink-0 text-emerald-400" />
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           </motion.div>
         ))}
+
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-start gap-3"
+          >
+            <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+              <Bot size={16} />
+            </div>
+            <div className="glass-panel text-slate-200 border-white/5 px-4 py-3 rounded-2xl text-sm flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin text-blue-400" />
+              <span className="text-slate-400">Analyzing your case…</span>
+            </div>
+          </motion.div>
+        )}
       </div>
 
-      {/* --- ENHANCED INPUT SECTION --- */}
+      {/* --- INPUT SECTION --- */}
       <div className="p-4 bg-white/5 border-t border-white/5 backdrop-blur-md">
         <form className="max-w-3xl mx-auto space-y-3" onSubmit={handleSend}>
-          {/* Anabin Detail Row */}
           <div className="grid grid-cols-3 gap-2">
             <div className="relative">
               <School className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
@@ -160,22 +227,8 @@ export function Chat({
               />
             </div>
           </div>
-          {/* Main Input Row */}
-          <div className="relative flex items-center gap-2">
-            {/*<input
-              type="file"
-              id="file-upload"
-              className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-            <button
-              type="button"
-              onClick={() => document.getElementById("file-upload")?.click()}
-              className={`p-2 transition-colors ${file ? "text-green-400" : "text-slate-500 hover:text-blue-400"}`}
-            >
-              <Paperclip size={20} />
-            </button> */}
 
+          <div className="relative flex items-center gap-2">
             <input
               id="uni-mate-input"
               name="uni-mate-message"
@@ -190,7 +243,11 @@ export function Chat({
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl disabled:opacity-50"
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+              {loading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Send size={18} />
+              )}
             </Button>
           </div>
         </form>

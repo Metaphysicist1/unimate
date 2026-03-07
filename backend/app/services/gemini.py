@@ -7,8 +7,10 @@ from typing import Dict, Any
 # Configure Gemini
 genai.configure(api_key=settings.GOOGLE_GEMINI_API_KEY)
 
-
-model = genai.GenerativeModel('gemini-2.0-flash')
+model = genai.GenerativeModel(
+    'gemini-2.0-flash',
+    generation_config=genai.GenerationConfig(temperature=0.7, max_output_tokens=2048),
+)
 
 class GeminiService:
     @staticmethod

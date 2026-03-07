@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import analyze, payment, webhook
+from app.api import analyze, chat, payment, webhook
 
 # Create FastAPI app
 app = FastAPI(
@@ -22,6 +22,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(analyze.router, prefix="/api", tags=["Analysis"])
+app.include_router(chat.router, tags=["Chat"])
 app.include_router(payment.router, prefix="/api", tags=["Payment"])
 app.include_router(webhook.router, prefix="/api", tags=["Webhooks"])
 

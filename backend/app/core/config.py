@@ -1,3 +1,5 @@
+from typing import ClassVar
+from pydantic import Field
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -21,8 +23,17 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str
     
     # CORS
-    FRONTEND_URL: str = "https://uniassist-checker.vercel.app"
     
+    if DEBUG:
+        FRONTEND_URL = "http://localhost:3000"
+    else:
+        FRONTEND_URL: str = Field(default="https://uniassist-checker.vercel.app")
+
+    # LangSmith (optional — set LANGCHAIN_API_KEY in .env to enable)
+    LANGCHAIN_TRACING_V2: bool = False
+    LANGCHAIN_API_KEY: str = ""
+    LANGCHAIN_PROJECT: str = "unimate"
+
     # Storage
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     
