@@ -1,6 +1,6 @@
 from supabase import create_client, Client
 from app.core.config import settings
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from postgrest.exceptions import APIError
 import json
 
@@ -89,5 +89,66 @@ class DatabaseService:
         # Get public URL
         url = supabase.storage.from_("documents").get_public_url(file_path)
         return url
+
+    @staticmethod
+    async def upsert_user_context(
+        session_id: str,
+        context: Any,
+        confidence: Dict[str, float],
+        status: str,
+    ) -> Dict[str, Any]:
+        """Insert or update user_context for a session."""
+        from app.models.context_schemas import UserContext
+
+        ctx: UserContext = context
+        data = {
+            "session_id": session_id,
+            "raw_prompt": ctx.raw_prompt,
+            "degree_type": ctx.degree_type,
+            "language_level": ctx.language_level,
+            "target_country": ctx.target_country,
+            "target_university": ctx.target_university,
+            "target_program": ctx.target_program,
+            "gpa_estimated": ctx.gpa_estimated,
+            "gaps_in_info": json.dumps([g.model_dump() for g in ctx.gaps_in_info]),
+            "conflicts": json.dumps([c.model_dump() for c in ctx.conflicts]),
+            "file_sources": ctx.file_sources,
+            "confidence": json.dumps(confidence),
+            "status": status,
+            "confirmed": False,
+        }
+
+        result = (
+            supabase.table("user_context")
+            .upsert(data, on_conflict="session_id")
+            .execute()
+        )
+        return result.data[0] if result.data else data
+
+    @staticmethod
+    async def confirm_user_context(session_id: str) -> Dict[str, Any]:
+        """Mark a user context as confirmed."""
+        result = (
+            supabase.table("user_context")
+            .update({"confirmed": True, "status": "confirmed"})
+            .eq("session_id", session_id)
+            .execute()
+        )
+        return result.data[0] if result.data else {}
+
+    @staticmethod
+    async def get_user_context(session_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve user context by session ID."""
+        try:
+            result = (
+                supabase.table("user_context")
+                .select("*")
+                .eq("session_id", session_id)
+                .execute()
+            )
+            return result.data[0] if result.data else None
+        except APIError:
+            return None
+
 
 db = DatabaseService()

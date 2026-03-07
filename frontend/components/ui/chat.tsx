@@ -4,44 +4,38 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Send,
   Bot,
-  School,
-  Globe,
-  GraduationCap,
   Loader2,
   ExternalLink,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import type { Message, AgentData, UserContext } from "@/lib/types";
 
-interface AgentData {
-  answer: string;
-  sources: string[];
-  next_steps: string[];
+interface ChatProps {
+  placeholder?: string;
+  context?: UserContext | null;
+  sessionId?: string;
+  onSendMessage?: (message: string) => void;
 }
 
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  data?: AgentData;
-}
-
-export function Chat({ placeholder }: { placeholder?: string }) {
+export function Chat({
+  placeholder,
+  context,
+  sessionId: externalSessionId,
+  onSendMessage,
+}: ChatProps) {
   const [userPrompt, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
       content:
-        "System Initialized. Provide your university details and describe your case to check your uni-assist application.",
+        "System Initialized. Your context has been loaded. Ask anything about your uni-assist application.",
     },
   ]);
-  const [universities, setUniversity] = useState("");
-  const [program, setProgram] = useState("");
-  const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sessionId] = useState(() => crypto.randomUUID());
+  const [sessionId] = useState(() => externalSessionId || crypto.randomUUID());
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,6 +58,8 @@ export function Chat({ placeholder }: { placeholder?: string }) {
     setInput("");
     setLoading(true);
 
+    if (onSendMessage) onSendMessage(text);
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -71,10 +67,10 @@ export function Chat({ placeholder }: { placeholder?: string }) {
         body: JSON.stringify({
           message: text,
           session_id: sessionId,
-          country: country || undefined,
-          program: program || undefined,
-          universities: universities
-            ? universities.split(",").map((u) => u.trim())
+          country: context?.target_country || undefined,
+          program: context?.target_program || undefined,
+          universities: context?.target_university
+            ? [context.target_university]
             : [],
         }),
       });
@@ -139,7 +135,10 @@ export function Chat({ placeholder }: { placeholder?: string }) {
                   </p>
                   <ul className="space-y-1">
                     {m.data.sources.map((src, i) => (
-                      <li key={i} className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <li
+                        key={i}
+                        className="flex items-center gap-1.5 text-xs text-slate-400"
+                      >
                         <ExternalLink size={10} className="shrink-0" />
                         {src.startsWith("http") ? (
                           <a
@@ -166,8 +165,14 @@ export function Chat({ placeholder }: { placeholder?: string }) {
                   </p>
                   <ul className="space-y-1">
                     {m.data.next_steps.map((step, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-xs text-slate-300">
-                        <ArrowRight size={10} className="mt-0.5 shrink-0 text-emerald-400" />
+                      <li
+                        key={i}
+                        className="flex items-start gap-1.5 text-xs text-slate-300"
+                      >
+                        <ArrowRight
+                          size={10}
+                          className="mt-0.5 shrink-0 text-emerald-400"
+                        />
                         <span>{step}</span>
                       </li>
                     ))}
@@ -189,67 +194,38 @@ export function Chat({ placeholder }: { placeholder?: string }) {
             </div>
             <div className="glass-panel text-slate-200 border-white/5 px-4 py-3 rounded-2xl text-sm flex items-center gap-2">
               <Loader2 size={14} className="animate-spin text-blue-400" />
-              <span className="text-slate-400">Analyzing your case…</span>
+              <span className="text-slate-400">Analyzing your case...</span>
             </div>
           </motion.div>
         )}
       </div>
 
-      {/* --- INPUT SECTION --- */}
+      {/* Input */}
       <div className="p-4 bg-white/5 border-t border-white/5 backdrop-blur-md">
-        <form className="max-w-3xl mx-auto space-y-3" onSubmit={handleSend}>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="relative">
-              <School className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-              <input
-                placeholder="University"
-                value={universities}
-                onChange={(e) => setUniversity(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:ring-1 focus:ring-blue-500 outline-none"
-              />
-            </div>
-            <div className="relative">
-              <GraduationCap className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-              <input
-                placeholder="Program"
-                value={program}
-                onChange={(e) => setProgram(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:ring-1 focus:ring-blue-500 outline-none"
-              />
-            </div>
-            <div className="relative">
-              <Globe className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-              <input
-                placeholder="Country"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:ring-1 focus:ring-blue-500 outline-none"
-              />
-            </div>
-          </div>
+        <form
+          className="max-w-3xl mx-auto flex items-center gap-2"
+          onSubmit={handleSend}
+        >
+          <input
+            id="uni-mate-input"
+            name="uni-mate-message"
+            value={userPrompt}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={placeholder || "Ask about your application..."}
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none"
+          />
 
-          <div className="relative flex items-center gap-2">
-            <input
-              id="uni-mate-input"
-              name="uni-mate-message"
-              value={userPrompt}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={placeholder || "Ask or describe your case..."}
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none"
-            />
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl disabled:opacity-50"
-            >
-              {loading ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Send size={18} />
-              )}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl disabled:opacity-50"
+          >
+            {loading ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Send size={18} />
+            )}
+          </Button>
         </form>
       </div>
     </div>
