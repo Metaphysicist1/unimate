@@ -9,7 +9,7 @@ import type {
 } from "@/lib/types";
 import { CONTEXT_FIELD_META as META } from "@/lib/types";
 
-const DEBOUNCE_MS = 800;
+const DEBOUNCE_MS = 1500;
 
 function buildChips(
   ctx: UserContext | null,

@@ -10,17 +10,22 @@ import { DocumentDropzone } from "@/components/document-dropzone";
 import { ContextSidebar } from "@/components/context-sidebar";
 import { VerificationStep } from "@/components/verification-step";
 import { Chat } from "@/components/ui/chat";
+import { SuccessTracker } from "@/components/success-tracker";
 import { Button } from "@/components/ui/button";
 import { useContextExtraction } from "@/lib/hooks/use-context-extraction";
+import { useAgentStream } from "@/lib/hooks/use-agent-stream";
 import type { UploadedFile, ContextFieldKey, ConflictInfo } from "@/lib/types";
 
 type Phase = "intake" | "verify" | "chat";
+
+const SECONDS_PER_FILE_FIELD = 45;
 
 export default function CheckPage() {
   const [sessionId] = useState(() => crypto.randomUUID());
   const [phase, setPhase] = useState<Phase>("intake");
   const [userInput, setUserInput] = useState("");
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [secondsSaved, setSecondsSaved] = useState(0);
 
   const {
     context,
@@ -35,6 +40,10 @@ export default function CheckPage() {
     confirmContext,
     updateChipManually,
   } = useContextExtraction(sessionId);
+
+  const { tracker, messages, sendMessage, isStreaming } = useAgentStream();
+
+  // ── Intake handlers ──
 
   const handleInputChange = useCallback(
     (value: string) => {
@@ -59,6 +68,17 @@ export default function CheckPage() {
       );
 
       const result = await extractFromFile(file);
+
+      if (result) {
+        const fieldsFromFile = Object.entries(result.context)
+          .filter(
+            ([k, v]) =>
+              v !== null &&
+              v !== undefined &&
+              !["gaps_in_info", "conflicts", "raw_prompt", "file_sources"].includes(k),
+          ).length;
+        setSecondsSaved((prev) => prev + fieldsFromFile * SECONDS_PER_FILE_FIELD);
+      }
 
       setFiles((prev) =>
         prev.map((f) =>
@@ -94,23 +114,27 @@ export default function CheckPage() {
     [updateChipManually],
   );
 
-  const handleAskFollowUp = useCallback(
-    (question: string) => {
-      setUserInput((prev) => (prev ? `${prev}\n\n${question}` : question));
+  const handleAskFollowUp = useCallback((question: string) => {
+    setUserInput((prev) => (prev ? `${prev}\n\n${question}` : question));
+  }, []);
+
+  // ── Chat handler (SSE streaming) ──
+
+  const handleChatMessage = useCallback(
+    (message: string) => {
+      sendMessage(message, context, sessionId, secondsSaved);
     },
-    [],
+    [sendMessage, context, sessionId, secondsSaved],
   );
 
   const handleReset = useCallback(() => {
     setPhase("intake");
     setUserInput("");
     setFiles([]);
+    setSecondsSaved(0);
   }, []);
 
-  const conflicts = useMemo(
-    () => context?.conflicts ?? [],
-    [context],
-  );
+  const conflicts = useMemo(() => context?.conflicts ?? [], [context]);
 
   const canProceed =
     context && chips.some((c) => c.status !== "empty") && !isExtracting;
@@ -131,7 +155,6 @@ export default function CheckPage() {
               exit={{ opacity: 0, y: -20 }}
               className="flex gap-6 max-w-6xl mx-auto"
             >
-              {/* Left: Input area */}
               <div className="flex-1 space-y-5">
                 <div>
                   <h1 className="text-2xl font-bold text-white mb-1">
@@ -139,7 +162,7 @@ export default function CheckPage() {
                   </h1>
                   <p className="text-sm text-slate-400">
                     Describe your goals, upload documents, and our AI will
-                    automatically extract all the details it needs.
+                    extract everything it needs.
                   </p>
                 </div>
 
@@ -156,7 +179,6 @@ export default function CheckPage() {
                   onFileUpload={handleFileUpload}
                 />
 
-                {/* Proceed button */}
                 <AnimatePresence>
                   {canProceed && (
                     <motion.div
@@ -176,7 +198,6 @@ export default function CheckPage() {
                 </AnimatePresence>
               </div>
 
-              {/* Right: Context sidebar */}
               <div className="w-72 shrink-0">
                 <div className="sticky top-28 glass-panel rounded-2xl border border-white/10 p-4 bg-[#0f172a]/90 max-h-[calc(100vh-8rem)] overflow-y-auto">
                   <ContextSidebar
@@ -230,7 +251,7 @@ export default function CheckPage() {
             </motion.div>
           )}
 
-          {/* ─── PHASE 3: CHAT ─── */}
+          {/* ─── PHASE 3: CHAT + SUCCESS TRACKER ─── */}
           {phase === "chat" && (
             <motion.div
               key="chat"
@@ -260,21 +281,18 @@ export default function CheckPage() {
                   <Chat
                     context={context}
                     sessionId={sessionId}
+                    messages={messages}
+                    isStreaming={isStreaming}
+                    onSendMessage={handleChatMessage}
                     placeholder="Ask about your uni-assist application..."
                   />
                 </div>
               </div>
 
-              {/* Persistent sidebar */}
+              {/* Success Tracker sidebar */}
               <div className="w-72 shrink-0">
                 <div className="sticky top-28 glass-panel rounded-2xl border border-white/10 p-4 bg-[#0f172a]/90 max-h-[calc(100vh-10rem)] overflow-y-auto">
-                  <ContextSidebar
-                    chips={chips}
-                    conflicts={[]}
-                    followUpQuestions={[]}
-                    isExtracting={false}
-                    extractionStatus="confirmed"
-                  />
+                  <SuccessTracker tracker={tracker} />
                 </div>
               </div>
             </motion.div>

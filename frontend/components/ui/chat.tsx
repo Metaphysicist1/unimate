@@ -1,42 +1,48 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Send,
-  Bot,
-  Loader2,
-  ExternalLink,
-  ArrowRight,
-} from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Bot, Loader2, ExternalLink, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import type { Message, AgentData, UserContext } from "@/lib/types";
+import type { AgentData, UserContext } from "@/lib/types";
+
+interface StreamMessage {
+  role: "user" | "assistant";
+  content: string;
+  data?: AgentData;
+}
 
 interface ChatProps {
   placeholder?: string;
   context?: UserContext | null;
   sessionId?: string;
+  messages?: StreamMessage[];
+  isStreaming?: boolean;
   onSendMessage?: (message: string) => void;
 }
 
 export function Chat({
   placeholder,
   context,
-  sessionId: externalSessionId,
+  sessionId: _sessionId,
+  messages: externalMessages,
+  isStreaming: externalStreaming,
   onSendMessage,
 }: ChatProps) {
   const [userPrompt, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
+  const [internalMessages, setInternalMessages] = useState<StreamMessage[]>([
     {
-      id: "1",
       role: "assistant",
       content:
-        "System Initialized. Your context has been loaded. Ask anything about your uni-assist application.",
+        "Your profile is loaded. Ask anything about your uni-assist application.",
     },
   ]);
-  const [loading, setLoading] = useState(false);
-  const [sessionId] = useState(() => externalSessionId || crypto.randomUUID());
+  const [internalLoading, setInternalLoading] = useState(false);
+  const [sessionId] = useState(() => _sessionId || crypto.randomUUID());
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const messages = externalMessages ?? internalMessages;
+  const loading = externalStreaming ?? internalLoading;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -45,61 +51,65 @@ export function Chat({
     });
   }, [messages]);
 
-  async function handleSend(e: React.FormEvent) {
-    e.preventDefault();
+  const handleSend = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const text = userPrompt.trim();
+      if (!text || loading) return;
 
-    const text = userPrompt.trim();
-    if (!text || loading) return;
+      setInput("");
 
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now().toString(), role: "user", content: text },
-    ]);
-    setInput("");
-    setLoading(true);
+      if (onSendMessage) {
+        onSendMessage(text);
+        return;
+      }
 
-    if (onSendMessage) onSendMessage(text);
+      setInternalMessages((prev) => [...prev, { role: "user", content: text }]);
+      setInternalLoading(true);
 
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          session_id: sessionId,
-          country: context?.target_country || undefined,
-          program: context?.target_program || undefined,
-          universities: context?.target_university
-            ? [context.target_university]
-            : [],
-        }),
-      });
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            session_id: sessionId,
+            country: context?.target_country || undefined,
+            program: context?.target_program || undefined,
+            universities: context?.target_university
+              ? [context.target_university]
+              : [],
+            degree_type: context?.degree_type || undefined,
+            language_level: context?.language_level || undefined,
+            gpa_estimated: context?.gpa_estimated,
+          }),
+        });
 
-      const json = await res.json();
-      const data: AgentData | undefined = json?.data;
+        const json = await res.json();
+        const data: AgentData | undefined = json?.data;
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data?.answer ?? JSON.stringify(json, null, 2),
-          data: data,
-        },
-      ]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Failed to reach the analysis server. Please try again.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }
+        setInternalMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data?.answer ?? JSON.stringify(json, null, 2),
+            data,
+          },
+        ]);
+      } catch {
+        setInternalMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Failed to reach the server. Please try again.",
+          },
+        ]);
+      } finally {
+        setInternalLoading(false);
+      }
+    },
+    [userPrompt, loading, onSendMessage, sessionId, context],
+  );
 
   return (
     <div className="flex flex-col h-full bg-transparent font-sans">
@@ -107,9 +117,9 @@ export function Chat({
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide"
       >
-        {messages.map((m) => (
+        {messages.map((m, idx) => (
           <motion.div
-            key={m.id}
+            key={idx}
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} items-start gap-3`}

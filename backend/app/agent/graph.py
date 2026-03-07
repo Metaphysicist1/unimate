@@ -1,4 +1,4 @@
-"""UniMate LangGraph agent — graph compilation, checkpointer & LangSmith setup."""
+"""UniMate LangGraph agent — Supervisor pattern with specialist routing."""
 
 from __future__ import annotations
 
@@ -9,10 +9,12 @@ from langgraph.checkpoint.memory import MemorySaver
 
 from app.agent.state import AgentState
 from app.agent.nodes import (
-    logic_node,
+    supervisor_node,
+    extraction_agent_node,
+    clarification_agent_node,
     researcher_node,
     db_retriever_node,
-    formatter_node,
+    strategist_node,
 )
 from app.core.config import settings
 
@@ -24,42 +26,62 @@ if settings.LANGCHAIN_TRACING_V2:
     os.environ.setdefault("LANGCHAIN_PROJECT", settings.LANGCHAIN_PROJECT)
 
 
-# ── Conditional router ──────────────────────────────────────────────────
+# ── Supervisor routing function ────────────────────────────────────────
 
-def _route_after_logic(state: AgentState) -> str:
-    """Return the next node name based on the logic node's decision."""
-    action = state.get("next_action", "respond")
-    if action == "search":
-        return "researcher"
-    if action == "retrieve":
-        return "db_retriever"
-    return "formatter"
+def _route_after_supervisor(state: AgentState) -> str:
+    """Route to the specialist agent chosen by the Supervisor."""
+    action = state.get("supervisor_action", "strategize")
+    route_map = {
+        "extract": "extraction_agent",
+        "clarify": "clarification_agent",
+        "research": "researcher",
+        "retrieve": "db_retriever",
+        "strategize": "strategist",
+    }
+    return route_map.get(action, "strategist")
 
 
 # ── Graph construction ──────────────────────────────────────────────────
 
 def build_graph() -> StateGraph:
-    """Wire nodes and edges into a LangGraph StateGraph."""
+    """
+    Supervisor Pattern:
+      START → supervisor → (extract|clarify|research|retrieve|strategize)
+      extract/clarify → END (they produce final_response with follow-up)
+      research/retrieve → supervisor (loop back for next decision)
+      strategist → END
+    """
     builder = StateGraph(AgentState)
 
-    builder.add_node("logic", logic_node)
+    builder.add_node("supervisor", supervisor_node)
+    builder.add_node("extraction_agent", extraction_agent_node)
+    builder.add_node("clarification_agent", clarification_agent_node)
     builder.add_node("researcher", researcher_node)
     builder.add_node("db_retriever", db_retriever_node)
-    builder.add_node("formatter", formatter_node)
+    builder.add_node("strategist", strategist_node)
 
-    builder.add_edge(START, "logic")
+    builder.add_edge(START, "supervisor")
+
     builder.add_conditional_edges(
-        "logic",
-        _route_after_logic,
+        "supervisor",
+        _route_after_supervisor,
         {
+            "extraction_agent": "extraction_agent",
+            "clarification_agent": "clarification_agent",
             "researcher": "researcher",
             "db_retriever": "db_retriever",
-            "formatter": "formatter",
+            "strategist": "strategist",
         },
     )
-    builder.add_edge("researcher", "logic")
-    builder.add_edge("db_retriever", "logic")
-    builder.add_edge("formatter", END)
+
+    # Research/retrieve loop back to supervisor for next decision
+    builder.add_edge("researcher", "supervisor")
+    builder.add_edge("db_retriever", "supervisor")
+
+    # Terminal nodes produce final_response and end
+    builder.add_edge("extraction_agent", END)
+    builder.add_edge("clarification_agent", END)
+    builder.add_edge("strategist", END)
 
     return builder
 
